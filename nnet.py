@@ -6,43 +6,38 @@ from mnist import *
 import os
 
 # hyperparameters
-h      = 200  # number of units in hidden layer
+h      = 100  # number of units in hidden layer
 lam    = 0.00 # L2 regularization
 alpha  = 0.1  # learning rate
-nsteps = 100  # number of gradient descent iterations
 
 # load mnist
 MNIST_PATH = os.environ['HOME'] + "/.data/mnist/"
 N_SAMPLES  = 5000
 x_train, y_train = load_mnist(path=MNIST_PATH, selection = slice(0, N_SAMPLES, 1))
 # m, n = 5000, 784
-# train_X = rng.randn(m, n)
-# train_y = rng.randint(size = m, low = 0, high = 9)
+# x_train = rng.randn(m, n)
+# y_train = rng.randint(size = m, low = 0, high = 9)
 
 # size of data
-m, n = train_X.shape
-k = len(np.unique(train_y)) # num of classes
+m, n = x_train.shape
+k = len(np.unique(y_train)) # num of classes
 
 print "Dataset loaded..."
 
 ### THEANO SYMBOLIC VARIABLES---------------
 # model parameters
-X = T.dmatrix('X')
+x = T.dmatrix('x')
 y = T.ivector('y')
-X.tag.test_value = train_X
-y.tag.test_value = train_y
 
 W1 = shared(rng.randn(n, h), name = 'W1')
-b1 = shared(np.zeros(h), name = 'b1')
+b1 = shared(rng.randn(h), name = 'b1')
 W2 = shared(rng.randn(h, k), name = 'W2')
-b2 = shared(np.zeros(k), name = 'b2')
+b2 = shared(rng.randn(k), name = 'b2')
 params = [W1, b1, W2, b2]
 
 # forward propogation
-H    = T.nnet.sigmoid(T.dot(X, W1) + b1)
-H.tag.test_value = np.zeros((h,1))
+H    = T.nnet.sigmoid(T.dot(x, W1) + b1)
 yhat = T.nnet.softmax(T.dot(H, W2) + b2)
-yhat.tag.test_value = np.zeros(k)
 
 # loss function
 loss = T.nnet.categorical_crossentropy(yhat, y).sum() \
@@ -51,22 +46,23 @@ grad = T.grad(loss, params)
 
 # train method
 train = function(
-    inputs = [X,y],
+    inputs = [x,y],
     outputs = loss,
     updates = [(p, p - alpha*dp) for (p, dp) in zip(params, grad)],
     name = "train",
     allow_input_downcast = True
 )
 predict = function([X], yhat.argmax(axis = 1))
-
-print "Theano compiled, starting training..."
+print "Theano compiled..."
 
 ### DO GRADIENT DESCENT --------------
-check = 1
-for i in range(nsteps):
-    cost = train(train_X, train_y)
-    if(i % check == 0): 
-        accuracy = 100 * (1 - (1.0*len((train_y - predict(train_X)).nonzero()[0]) / m))
-        print "%d'th iteration: cost = %.f, accuracy = %.2f%%" % (i, cost, accuracy)
-
-print "done"
+def train_nnet(nsteps = 50, checkpt = 5):
+    print "Starting training..."
+    costs = []
+    for i in range(nsteps):
+        cost = train(x_train, y_train)
+        costs.append(cost.tolist())
+        if(i % checkpt == 0): 
+            accuracy = 100 * (1 - (1.0*len((y_train - predict(x_train)).nonzero()[0]) / m))
+            print "%d'th iteration: cost = %.5f, accuracy = %.2f%%" % (i, cost, accuracy)
+    return costs
