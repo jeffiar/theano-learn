@@ -24,19 +24,20 @@ train_y = rng.randint(size = m, low = 0, high = 9)
 # model parameters
 X = T.dmatrix('X')
 y = T.ivector('y')
-# X.tag.test_value = train_X
-# y.tag.test_value = train_y
-W1 = theano.shared(rng.random((n, h)), name = 'W1')
-b1  = theano.shared(np.zeros(h), name = 'b1')
-W2 = theano.shared(rng.random((h, k)), name = 'W2')
-b2  = theano.shared(np.zeros(k), name = 'b2')
+X.tag.test_value = train_X
+y.tag.test_value = train_y
+
+W1 = theano.shared(rng.randn(n, h), name = 'W1')
+b1 = theano.shared(np.zeros(h), name = 'b1')
+W2 = theano.shared(rng.randn(h, k), name = 'W2')
+b2 = theano.shared(np.zeros(k), name = 'b2')
 params = [W1, b1, W2, b2]
 
 # forward propogation
 H    = T.nnet.sigmoid(T.dot(X, W1) + b1)
-# H.tag.test_value = np.zeros(h)
+H.tag.test_value = np.zeros((h,1))
 yhat = T.nnet.softmax(T.dot(H, W2) + b2)
-# yhat.tag.test_value = np.zeros(k)
+yhat.tag.test_value = np.zeros(k)
 
 # loss function
 loss = T.nnet.categorical_crossentropy(yhat, y).sum() \
@@ -53,11 +54,12 @@ train = theano.function(
 )
 predict = theano.function([X], yhat.argmax(axis = 1))
 
-stops = 50
-checkpoints = [x*(training_steps/stops) for x in range(stops)]
-for i in range(training_steps):
+### DO GRADIENT DESCENT --------------
+check = 5
+for i in range(nsteps):
     train(train_X, train_y)
-    if(i in checkpoints): 
-        print "%d'th ieration. error rate %.3f%%" % (i, 100.0*len((train_y - predict(train_X)).nonzero()[0]) / m)
+    if(i % check == 0): 
+        err_rate = 100.0*len((train_y - predict(train_X)).nonzero()[0]) / m
+        print "%d'th iteration: error rate = %.3f%%" % (i, err_rate)
 
 print "done"
