@@ -36,12 +36,13 @@ b2 = shared(rng.randn(k), name = 'b2')
 params = [W1, b1, W2, b2]
 
 # forward propogation
-H    = T.nnet.sigmoid(T.dot(x, W1) + b1)
-yhat = T.nnet.softmax(T.dot(H, W2) + b2)
+H      = T.nnet.sigmoid(T.dot(x, W1) + b1)
+y_hat  = T.nnet.softmax(T.dot(H, W2) + b2)
+y_pred = T.argmax(y_hat, axis = 1)
 
 # loss function
-loss = T.nnet.categorical_crossentropy(yhat, y).sum() \
-       +  lam * ((W1**2).sum() + (W2**2).sum())
+loss = T.mean(T.nnet.categorical_crossentropy(y_hat, y))
+       # +  lam * ((W1**2).sum() + (W2**2).sum())
 grad = T.grad(loss, params)
 
 # train method
@@ -52,7 +53,7 @@ train = function(
     name = "train",
     allow_input_downcast = True
 )
-predict = function([X], yhat.argmax(axis = 1))
+predict = function([x], y_pred)
 print "Theano compiled..."
 
 ### DO GRADIENT DESCENT --------------
