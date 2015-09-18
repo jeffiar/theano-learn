@@ -1,24 +1,27 @@
 from theano import *
 import theano.tensor as T
 import numpy as np
+from mnist import *
 rng = numpy.random
 
 # hyperparameters
 h      = 200  # number of units in hidden layer
-lam    = 0.01 # L2 regularization
+lam    = 0.00 # L2 regularization
 alpha  = 0.1  # learning rate
-nsteps = 50  # number of gradient descent iterations
+nsteps = 100  # number of gradient descent iterations
+
+# load mnist
+MNIST_PATH = "/home/jeffrey/.data/mnist/"
+train_X, train_y = load_mnist(path=MNIST_PATH, selection = slice(0, 5000, 1))
+# m, n = 5000, 784
+# train_X = rng.randn(m, n)
+# train_y = rng.randint(size = m, low = 0, high = 9)
 
 # size of data
-m = 4000
-n = 784
-k = 10 # num of classes
+m, n = train_X.shape
+k = len(np.unique(train_y)) # num of classes
 
-# We don't have MNIST, so we'll just randomly generate
-# our training data from noise...
-# TODO: download MNIST and try training on that
-train_X = rng.randn(m, n)
-train_y = rng.randint(size = m, low = 0, high = 9)
+print "Dataset loaded..."
 
 ### THEANO SYMBOLIC VARIABLES---------------
 # model parameters
@@ -27,10 +30,10 @@ y = T.ivector('y')
 X.tag.test_value = train_X
 y.tag.test_value = train_y
 
-W1 = theano.shared(rng.randn(n, h), name = 'W1')
-b1 = theano.shared(np.zeros(h), name = 'b1')
-W2 = theano.shared(rng.randn(h, k), name = 'W2')
-b2 = theano.shared(np.zeros(k), name = 'b2')
+W1 = shared(rng.randn(n, h), name = 'W1')
+b1 = shared(np.zeros(h), name = 'b1')
+W2 = shared(rng.randn(h, k), name = 'W2')
+b2 = shared(np.zeros(k), name = 'b2')
 params = [W1, b1, W2, b2]
 
 # forward propogation
@@ -45,21 +48,23 @@ loss = T.nnet.categorical_crossentropy(yhat, y).sum() \
 grad = T.grad(loss, params)
 
 # train method
-train = theano.function(
+train = function(
     inputs = [X,y],
     outputs = loss,
     updates = [(p, p - alpha*dp) for (p, dp) in zip(params, grad)],
     name = "train",
     allow_input_downcast = True
 )
-predict = theano.function([X], yhat.argmax(axis = 1))
+predict = function([X], yhat.argmax(axis = 1))
+
+print "Theano compiled, starting training..."
 
 ### DO GRADIENT DESCENT --------------
-check = 5
+check = 1
 for i in range(nsteps):
-    train(train_X, train_y)
+    cost = train(train_X, train_y)
     if(i % check == 0): 
-        err_rate = 100.0*len((train_y - predict(train_X)).nonzero()[0]) / m
-        print "%d'th iteration: error rate = %.3f%%" % (i, err_rate)
+        accuracy = 100 * (1 - (1.0*len((train_y - predict(train_X)).nonzero()[0]) / m))
+        print "%d'th iteration: cost = %.f, accuracy = %.2f%%" % (i, cost, accuracy)
 
 print "done"
