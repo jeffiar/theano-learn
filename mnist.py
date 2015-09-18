@@ -71,8 +71,8 @@ def load_mnist(dataset="training", digits=None, path=None, asbytes=False, select
 
     # The files are assumed to have these names and should be found in 'path'
     files = {
-        'training': ('train-images.idx3-ubyte', 'train-labels.idx1-ubyte'), # file names have dots...
-        'testing': ('t10k-images.idx3-ubyte', 't10k-labels.idx1-ubyte'),
+        'training': ('train-images-idx3-ubyte', 'train-labels-idx1-ubyte'),
+        'testing': ('t10k-images-idx3-ubyte', 't10k-labels-idx1-ubyte'),
     }
 
     if path is None:

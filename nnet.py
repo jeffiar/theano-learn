@@ -1,8 +1,9 @@
 from theano import *
 import theano.tensor as T
 import numpy as np
-from mnist import *
 rng = numpy.random
+from mnist import *
+import os
 
 # hyperparameters
 h      = 200  # number of units in hidden layer
@@ -11,8 +12,9 @@ alpha  = 0.1  # learning rate
 nsteps = 100  # number of gradient descent iterations
 
 # load mnist
-MNIST_PATH = "/home/jeffrey/.data/mnist/"
-train_X, train_y = load_mnist(path=MNIST_PATH, selection = slice(0, 5000, 1))
+MNIST_PATH = os.environ['HOME'] + "/.data/mnist/"
+N_SAMPLES  = 5000
+x_train, y_train = load_mnist(path=MNIST_PATH, selection = slice(0, N_SAMPLES, 1))
 # m, n = 5000, 784
 # train_X = rng.randn(m, n)
 # train_y = rng.randint(size = m, low = 0, high = 9)
