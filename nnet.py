@@ -4,15 +4,19 @@ import numpy as np
 rng = numpy.random
 
 # hyperparameters
-lam = 0.01 # L2 penalty
-alpha = 0.1 # learning rate
-h = 200 # size of hidden layer
-training_steps = 500
+h      = 200  # number of units in hidden layer
+lam    = 0.01 # L2 regularization
+alpha  = 0.1  # learning rate
+nsteps = 50  # number of gradient descent iterations
 
-# training data
+# size of data
 m = 4000
 n = 784
 k = 10 # num of classes
+
+# We don't have MNIST, so we'll just randomly generate
+# our training data from noise...
+# TODO: download MNIST and try training on that
 train_X = rng.randn(m, n)
 train_y = rng.randint(size = m, low = 0, high = 9)
 
@@ -35,8 +39,8 @@ yhat = T.nnet.softmax(T.dot(H, W2) + b2)
 # yhat.tag.test_value = np.zeros(k)
 
 # loss function
-loss = T.nnet.categorical_crossentropy(yhat, y).sum()
-loss += lam * ((W1**2).sum() + (W2**2).sum())
+loss = T.nnet.categorical_crossentropy(yhat, y).sum() \
+       +  lam * ((W1**2).sum() + (W2**2).sum())
 grad = T.grad(loss, params)
 
 # train method
