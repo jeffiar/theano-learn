@@ -52,14 +52,29 @@ train = function(
 predict = function([x], y_pred)
 print "Theano compiled..."
 
-### DO GRADIENT DESCENT --------------
-def train_nnet(nsteps = 50, checkpt = 5):
-    print "Starting training..."
-    costs = []
-    for i in range(nsteps):
-        cost = train(x_train, y_train)
-        costs.append(cost.tolist())
-        if(i % checkpt == 0): 
-            accuracy = 100 * (1 - (1.0*len((y_train - predict(x_train)).nonzero()[0]) / m))
-            print "%d'th iteration: cost = %.5f, accuracy = %.2f%%" % (i, cost, accuracy)
-    return costs
+### Neural net class
+class nnet_model:
+    def __init__(self):
+        self.__train__ = train
+        self.nsteps = 0
+        self.costs, self.accs = [], []
+
+    def train(self, nsteps = 10, checkpt = 0):
+        if checkpt == 0: checkpt = nsteps
+        for i in range(nsteps):
+            self.train_step()
+            if i % checkpt == 0:
+                self.print_info()
+
+    def train_step(self):
+        cost = self.__train__(x_train, y_train).tolist()
+        acc = 100 * (1 - (1.0*len((y_train - predict(x_train)).nonzero()[0]) / m))
+        self.accs.append(acc)
+        self.costs.append(cost)
+        self.nsteps = self.nsteps + 1
+
+    def print_info(self):
+        print "%d'th iteration: cost = %.4f, accuracy = %.2f%%" \
+                % (self.nsteps, self.costs[-1], self.accs[-1])
+
+net = nnet_model()
