@@ -2,20 +2,17 @@ from theano import *
 import theano.tensor as T
 import numpy as np
 import numpy.random as rng
-import mnist
-import os
+
+import datasets
+from things import * # helpful functions
 
 # hyperparameters
-h      = 100  # number of units in hidden layer
-lam    = 0.01 # L2 regularization
-alpha  = 0.1  # learning rate
+h     = 100  # number of units in hidden layer
+lam   = 0.01 # L2 regularization
+alpha = 0.1  # learning rate
 
 # load mnist
-MNIST_PATH = os.environ['HOME'] + "/.data/mnist/"
-N_SAMPLES  = 5000
-x_train, y_train = mnist.load(path=MNIST_PATH, selection = slice(0, N_SAMPLES, 1))
-
-# size of data
+x_train, y_train = datasets.mnist()
 m, n = x_train.shape
 k = len(np.unique(y_train)) # num of classes
 print "Dataset loaded..."
@@ -26,9 +23,9 @@ x = T.dmatrix('x')
 y = T.ivector('y')
 
 W1 = shared(rng.randn(n, h), name = 'W1')
-b1 = shared(rng.randn(h), name = 'b1')
+b1 = shared(rng.randn(h),    name = 'b1')
 W2 = shared(rng.randn(h, k), name = 'W2')
-b2 = shared(rng.randn(k), name = 'b2')
+b2 = shared(rng.randn(k),    name = 'b2')
 params = [W1, b1, W2, b2]
 
 # forward propogation
