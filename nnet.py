@@ -4,7 +4,6 @@ import numpy as np
 import numpy.random as rng
 
 import datasets
-from things import * # helpful functions
 
 # hyperparameters
 h     = 100  # number of units in hidden layer
