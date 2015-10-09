@@ -1,9 +1,11 @@
-## Taken from http://g.sweyla.com/blog/2012/mnist-numpy/ (and changed a few lines)
 import os, struct
 from array import array as pyarray 
 from numpy import append, array, int8, uint8, zeros, asarray
 
-def load(dataset="training", digits=None, path=None, asbytes=False, selection=None, return_labels=True, return_indices=False, flatten=True):
+DATA_PATH = os.environ['HOME'] + "/.data"
+
+## Taken from http://g.sweyla.com/blog/2012/mnist-numpy/ (and changed a few lines)
+def mnist(dataset="training", digits=None, path=os.path.join(DATA_PATH, "mnist"), asbytes=False, selection=None, return_labels=True, return_indices=False, flatten=True):
     """
     Loads MNIST files into a 3D numpy array.
 
