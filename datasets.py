@@ -1,11 +1,12 @@
 import os, struct
 from array import array as pyarray 
 from numpy import append, array, int8, uint8, zeros, asarray
+import cPickle as pickle
 
 DATA_PATH = os.environ['HOME'] + "/.data"
 
 ## Taken from http://g.sweyla.com/blog/2012/mnist-numpy/ (and changed a few lines)
-def mnist(dataset="training", digits=None, path=os.path.join(DATA_PATH, "mnist"), asbytes=False, selection=None, return_labels=True, return_indices=False, flatten=True):
+def mnist(dataset="training", path=os.path.join(DATA_PATH, "mnist"), asbytes=False, selection=None, flatten=True):
     """
     Loads MNIST files into a 3D numpy array.
 
@@ -21,9 +22,6 @@ def mnist(dataset="training", digits=None, path=os.path.join(DATA_PATH, "mnist")
     dataset : str 
         Either "training" or "testing", depending on which dataset you want to
         load. 
-    digits : list 
-        Integer list of digits to load. The entire database is loaded if set to
-        ``None``. Default is ``None``.
     path : str 
         Path to your MNIST datafiles. The default is ``None``, which will try
         to take the path from your environment variable ``MNIST``. The data can
@@ -35,15 +33,6 @@ def mnist(dataset="training", digits=None, path=os.path.join(DATA_PATH, "mnist")
         Using a `slice` object, specify what subset of the dataset to load. An
         example is ``slice(0, 20, 2)``, which would load every other digit
         until--but not including--the twentieth.
-    return_labels : bool
-        Specify whether or not labels should be returned. This is also a speed
-        performance if digits are not specified, since then the labels file
-        does not need to be read at all.
-    return_indicies : bool
-        Specify whether or not to return the MNIST indices that were fetched.
-        This is valuable only if digits is specified, because in that case it
-        can be valuable to know how far
-        in the database it reached.
     flatten : bool
         Specify whether to return each data sample as a 1-by-784 vector rather than
         in the standard 28 by 28 matrix grid
@@ -51,11 +40,9 @@ def mnist(dataset="training", digits=None, path=os.path.join(DATA_PATH, "mnist")
     Returns
     -------
     images : ndarray
-        Image data of shape ``(N, rows, cols)``, where ``N`` is the number of images. If neither labels nor inices are returned, then this is returned directly, and not inside a 1-sized tuple.
+        Image data of shape ``(N, rows, cols)``, where ``N`` is the number of images.
     labels : ndarray
-        Array of size ``N`` describing the labels. Returned only if ``return_labels`` is `True`, which is default.
-    indices : ndarray
-        The indices in the database that were returned.
+        Array of size ``N`` describing the labels.
 
     Examples
     --------
@@ -63,13 +50,19 @@ def mnist(dataset="training", digits=None, path=os.path.join(DATA_PATH, "mnist")
     environment variable ``$MNIST`` point to the folder, this will load all
     images and labels from the training set:
 
-    >>> images, labels = ag.io.load_mnist('training') # doctest: +SKIP
-
-    Load 100 sevens from the testing set:    
-
-    >>> sevens = ag.io.load_mnist('testing', digits=[7], selection=slice(0, 100), return_labels=False) # doctest: +SKIP
+    >>> images, labels = datasets.load_mnist('training') # doctest: +SKIP
 
     """
+    
+    if dataset not in ["training", "testing"]:
+        raise ValueError("Data set must be 'testing' or 'training'")
+
+    # if we've created and pickled the datasets already, load them from cache
+    filename = "data/mnist_" + dataset + ".pkl"
+    if os.path.exists(filename):
+        with open(filename, 'rb') as f:
+            pic = pickle.load(f)
+        return pic['images'], pic['labels']
 
     # The files are assumed to have these names and should be found in 'path'
     files = {
@@ -83,41 +76,27 @@ def mnist(dataset="training", digits=None, path=os.path.join(DATA_PATH, "mnist")
         except KeyError:
             raise ValueError("Unspecified path requires environment variable $MNIST to be set")
 
-    try:
-        images_fname = os.path.join(path, files[dataset][0])
-        labels_fname = os.path.join(path, files[dataset][1])
-    except KeyError:
-        raise ValueError("Data set must be 'testing' or 'training'")
+    images_fname = os.path.join(path, files[dataset][0])
+    labels_fname = os.path.join(path, files[dataset][1])
 
-    # We can skip the labels file only if digits aren't specified and labels aren't asked for
-    if return_labels or digits is not None:
-        flbl = open(labels_fname, 'rb')
+    with open(labels_fname, 'rb') as flbl:
         magic_nr, size = struct.unpack(">II", flbl.read(8))
         labels_raw = pyarray("b", flbl.read())
-        flbl.close()
 
-    fimg = open(images_fname, 'rb')
-    magic_nr, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
-    images_raw = pyarray("B", fimg.read())
-    fimg.close()
+    with open(images_fname, 'rb') as fimg:
+        magic_nr, size, rows, cols = struct.unpack(">IIII", fimg.read(16))
+        images_raw = pyarray("B", fimg.read())
 
-    if digits:
-        indices = [k for k in range(size) if labels_raw[k] in digits]
-    else:
-        indices = range(size)
-
+    indices = range(size)
     if selection:
         indices = indices[selection] 
     N = len(indices)
 
     images = zeros((N, rows, cols), dtype=uint8)
-
-    if return_labels:
-        labels = zeros((N), dtype=int8)
+    labels = zeros((N), dtype=int8)
     for i, index in enumerate(indices):
         images[i] = array(images_raw[ indices[i]*rows*cols : (indices[i]+1)*rows*cols ]).reshape((rows, cols))
-        if return_labels:
-            labels[i] = labels_raw[indices[i]]
+        labels[i] = labels_raw[indices[i]]
 
     if not asbytes:
         images = images.astype(float)/255.0
@@ -125,12 +104,13 @@ def mnist(dataset="training", digits=None, path=os.path.join(DATA_PATH, "mnist")
     if flatten:
         images = asarray([image.flatten() for image in images])
 
-    ret = (images,)
-    if return_labels:
-        ret += (labels,)
-    if return_indices:
-        ret += (indices,)
-    if len(ret) == 1:
-        return ret[0] # Don't return a tuple of one
-    else:
-        return ret
+    # write pickled objects so we don't have to create them again
+    with open(filename, 'wb') as f:
+        pickle.dump({'images':images, 'labels':labels}, f, 2)
+    return (images, labels)
+
+if __name__=="__main__":
+    mnist()
+    print 1 
+    mnist('testing')
+    print 2 
