@@ -1,6 +1,7 @@
 import os, struct
 from array import array as pyarray 
 from numpy import append, array, int8, uint8, zeros, asarray
+import theano
 import cPickle as pickle
 
 DATA_PATH = os.environ['HOME'] + "/.data"
@@ -92,14 +93,14 @@ def mnist(dataset="training", path=os.path.join(DATA_PATH, "mnist"), asbytes=Fal
         indices = indices[selection] 
     N = len(indices)
 
-    images = zeros((N, rows, cols), dtype=uint8)
-    labels = zeros((N), dtype=int8)
+    images = zeros((N, rows, cols), dtype=int)
+    labels = zeros((N), dtype=int)
     for i, index in enumerate(indices):
         images[i] = array(images_raw[ indices[i]*rows*cols : (indices[i]+1)*rows*cols ]).reshape((rows, cols))
         labels[i] = labels_raw[indices[i]]
 
     if not asbytes:
-        images = images.astype(float)/255.0
+        images = images.astype(theano.config.floatX)/255.0
 
     if flatten:
         images = asarray([image.flatten() for image in images])
