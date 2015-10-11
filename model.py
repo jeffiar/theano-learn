@@ -18,6 +18,10 @@ def build(P, n_input, n_hidden, n_output):
 
     return f
 
+def cost(P, Y_hat, Y, l2 = 0):
+    return (T.mean(T.nnet.categorical_crossentropy(Y_hat, Y)) +
+           l2 * sum(T.mean(p**2) for p in P.values()))
+
 if __name__ == "__main__":
     P = Parameters()
     X = T.matrix('X')
