@@ -105,3 +105,6 @@ def rmsprop(parameters,gradients,discount=0.95,momentum=0.9,learning_rate=1e-4,e
 
     return deltas, acc_updates + sq_acc_updates + delta_updates
 
+
+def gradient_descent(parameters, gradients, learning_rate=1e-2):
+    return [ (p, p - learning_rate*dp) for p,dp in izip(parameters, gradients) ]
