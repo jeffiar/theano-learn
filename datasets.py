@@ -1,6 +1,6 @@
 import os, struct
 from array import array as pyarray 
-from numpy import append, array, int8, uint8, zeros, asarray
+from numpy import append, array, int32, zeros, asarray
 import theano
 import cPickle as pickle
 
@@ -28,7 +28,7 @@ def mnist(dataset="training", path=os.path.join(DATA_PATH, "mnist"), asbytes=Fal
         to take the path from your environment variable ``MNIST``. The data can
         be downloaded from http://yann.lecun.com/exdb/mnist/.
     asbytes : bool
-        If True, returns data as ``numpy.uint8`` in [0, 255] as opposed to
+        If True, returns data as ``numpy.int32`` in [0, 255] as opposed to
         ``numpy.float64`` in [0.0, 1.0].
     selection : slice
         Using a `slice` object, specify what subset of the dataset to load. An
@@ -93,8 +93,8 @@ def mnist(dataset="training", path=os.path.join(DATA_PATH, "mnist"), asbytes=Fal
         indices = indices[selection] 
     N = len(indices)
 
-    images = zeros((N, rows, cols), dtype=int)
-    labels = zeros((N), dtype=int)
+    images = zeros((N, rows, cols), dtype=int32)
+    labels = zeros((N), dtype=int32)
     for i, index in enumerate(indices):
         images[i] = array(images_raw[ indices[i]*rows*cols : (indices[i]+1)*rows*cols ]).reshape((rows, cols))
         labels[i] = labels_raw[indices[i]]
