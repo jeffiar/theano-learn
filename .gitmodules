@@ -1,3 +1,0 @@
-[submodule "theano_toolkit"]
-	path = theano_toolkit
-	url = https://github.com/shawntan/theano_toolkit.git
