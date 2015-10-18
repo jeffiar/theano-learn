@@ -8,13 +8,15 @@ python, no knowledge of numpy, and a pretty good grasp of basic machine
 learning and the math associated with it...so this will be a fun journey!
 
 ### Goals to accomplish (in rough chronological order)
-* logistic regression
-* Basic feedforward neural network
-* Convolutional neural network
-* Recurrent neural network
-* LSTM (yikes)
+[x] logistic regression
+[x] Basic feedforward neural network
+[x] Convolutional neural network
+[ ] Recurrent neural network
+[ ] LSTM (yikes)
 
 ### Planned projects/applications:
-* Drug response prediction from microarray data
-* Speech recognition
-* Theorem 2 classification project ;)
+[ ] Transcription factor to DNA binding prediction
+[ ] T-cell receptor to protein binding predction
+[ ] Drug response prediction from microarray data
+[ ] Speech recognition
+[ ] Theorem 2 classification project ;)
