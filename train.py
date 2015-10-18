@@ -1,13 +1,12 @@
 import theano
 import theano.tensor as T
 import numpy as np
-from theano_toolkit import utils as U
 from theano_toolkit import updates
 from theano_toolkit.parameters import Parameters
-from itertools import islice
 
 import model
 import datasets
+from trainer import Trainer
 
 def make_batches(x, y, batch_size=1000):
     "Generates tuples (x,y) of training mini-batches"
@@ -20,25 +19,6 @@ def make_batches(x, y, batch_size=1000):
         for i in xrange(n_samples/batch_size):
             idxs = slice(i*batch_size, (i+1) * batch_size)
             yield x[idxs],y[idxs]
-
-
-def make_train_loop(_batches, train, predict):
-    def train_loop(nsteps=10, checkpt=1):
-        "Trains for `nsteps` steps, and prints info every `checkpt` steps"
-        try:
-            batches = islice(_batches, nsteps)
-            for i, batch in enumerate(batches):
-                x,y  = batch
-                cost = train(x, y)
-
-                if(i % checkpt == 0):
-                    acc = 100.0 * sum(y == predict(x)) / len(y)
-                    print "%d'th iteration: cost = %.6f, accuracy = %.2f%%" % (i, cost, acc)
-
-        except KeyboardInterrupt:
-            print "training interrupted."
-
-    return train_loop
 
 
 if __name__ == "__main__":
@@ -62,7 +42,7 @@ if __name__ == "__main__":
     params = P.values()
     grad   = T.grad(cost, wrt = params)
     train  = theano.function([X,Y], cost,
-                updates=updates.gradient_descent(params, grad, learning_rate=0.1))
-    train_loop = make_train_loop(batches, train, predict)
+                updates=updates.rmsprop(params, grad))
+    trainer = Trainer(batches, train, predict)
 
-    # train_loop()
+    # trainer()
