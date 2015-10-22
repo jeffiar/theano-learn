@@ -4,7 +4,7 @@ import numpy as np
 from theano_toolkit import updates
 from theano_toolkit.parameters import Parameters
 
-import model
+import simple_model as model
 import datasets
 from trainer import Trainer
 

@@ -6,7 +6,7 @@ from theano_toolkit import updates
 from theano_toolkit.parameters import Parameters
 from theano.tensor.signal.downsample import max_pool_2d
 
-def build_conv_pool(P, n_layer, input_layer, n_feats_out, n_feats_in, conv_size, pool_size):
+def _build_conv_pool(P, n_layer, input_layer, n_feats_out, n_feats_in, conv_size, pool_size):
     P["W_%d"%n_layer] = U.initial_weights(n_feats_out, n_feats_in, conv_size, conv_size)
     P["b_%d"%n_layer] = np.zeros((n_feats_out, ))
     W = P["W_%d"%n_layer]
@@ -24,10 +24,10 @@ def build(P, n_input, n_hidden, n_output):
     # TODO: fix these magic numbers (especially the 800)
     def f(X):
         layer0 = X.reshape((X.shape[0], 1, 28, 28))
-        layer1 = build_conv_pool(P, 1, layer0, 20,  1, 5, 2)
-        layer2_= build_conv_pool(P, 2, layer1, 50, 20, 5, 2)
+        layer1 = _build_conv_pool(P, 1, layer0, 20,  1, 5, 2)
+        layer2_= _build_conv_pool(P, 2, layer1, 50, 20, 5, 2)
         layer2 = layer2_.flatten(2)
-        output = T.nnet.softmax(T.dot(layer2, P.W_hidden_output + P.b_output))
+        output = T.nnet.softmax(T.dot(layer2, P.W_hidden_output) + P.b_output)
         return output
 
     return f
@@ -50,4 +50,3 @@ if __name__ == "__main__":
     f = theano.function(inputs = [X], outputs = Y_hat)
     J = cost(P, Y_hat, Y)
     grad = T.grad(J, wrt=P.values())
-
