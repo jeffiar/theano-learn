@@ -4,7 +4,7 @@ import numpy as np
 from theano_toolkit import updates
 from theano_toolkit.parameters import Parameters
 
-import simple_model as model
+import TF_model as model
 import datasets
 from trainer import Trainer
 
@@ -23,26 +23,26 @@ def make_batches(x, y, batch_size=1000):
 
 if __name__ == "__main__":
     print "Loading dataset..."
-    x,y = datasets.mnist()
+    x,y = datasets.transcription_factor()
     batches = make_batches(x, y, 1000)
 
     print "Compiling theano..."
-    X = T.matrix('X')
-    Y = T.ivector('Y')
+    X = T.imatrix('X')
+    Y = T.fmatrix('Y')
     P = Parameters()
 
     # TODO: find better place to put magic numbers
-    net     = model.build(P, 784, 800, 10)
+    net     = model.build(P, 140, 100, 1)
     Y_hat   = net(X)
-    Y_pred  = T.argmax(Y_hat, axis=1)
-    predict = theano.function([X], Y_pred)
+    predict = theano.function([X], Y_hat)
     cost    = model.cost(P, Y_hat, Y)
 
     print "Calculating gradient..."
     params = P.values()
     grad   = T.grad(cost, wrt = params)
+    grad   = [g.astype(theano.config.floatX) for g in grad] #idek...
     train  = theano.function([X,Y], cost,
-                updates=updates.rmsprop(params, grad))
+                updates=updates.gradient_descent(params, grad))
     trainer = Trainer(batches, train, predict)
 
     # trainer()

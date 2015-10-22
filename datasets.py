@@ -1,6 +1,6 @@
 import os
 from array import array as pyarray 
-from numpy import append, array, int32, zeros, asarray
+from numpy import append, array, int32, float32, zeros, asarray
 import theano
 import cPickle as pickle
 import gzip
@@ -142,12 +142,21 @@ def transcription_factor(dataset="training", index=1, path=os.path.join(DATA_PAT
     # Load the dataset
     filename = os.path.join(path, "TF_%d_cont.pkl.gz" % index)
     with gzip.open(filename, 'rb') as f:
-        train_set, valid_set, test_set = pickle.load(f)
+        sets = pickle.load(f)
 
-    dic  = {"training"   : train_set,
-            "validation" : valid_set,
-            "testing"    : test_set,
-            "all"        : (train_set, valid_set, test_set)}
+    # convert x labels into integers and y labels into single-prec. floats
+    def convert(s):
+        x,y = s
+        x = x.astype(int32)
+        y = y.astype(float32)
+        return x,y
+
+    sets = tuple((convert(s) for s in sets))
+
+    dic  = {"training"   : sets[0],
+            "validation" : sets[1],
+            "testing"    : sets[2],
+            "all"        : sets}
 
     return dic[dataset]
 
