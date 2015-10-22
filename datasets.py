@@ -1,15 +1,17 @@
-import os, struct
+import os
 from array import array as pyarray 
 from numpy import append, array, int32, zeros, asarray
 import theano
 import cPickle as pickle
+import gzip
 
-DATA_PATH = os.environ['HOME'] + "/.data"
+# DATA_PATH = os.environ['HOME'] + "/.data"
+DATA_PATH = "/labs/khatrilab/deeplearning/data"
 
 ## Taken from http://g.sweyla.com/blog/2012/mnist-numpy/ (and changed a few lines)
 def mnist(dataset="training", path=os.path.join(DATA_PATH, "mnist"), asbytes=False, selection=None, flatten=True):
     """
-    Loads MNIST files into a 3D numpy array.
+    Loads MNIST files into a 2D numpy array.
 
     You have to download the data separately from [MNIST]_. It is recommended
     to set the environment variable ``MNIST`` to point to the folder where you
@@ -106,12 +108,48 @@ def mnist(dataset="training", path=os.path.join(DATA_PATH, "mnist"), asbytes=Fal
         images = asarray([image.flatten() for image in images])
 
     # write pickled objects so we don't have to create them again
+    if not os.path.exists("data"):
+        os.mkdir("data")
     with open(filename, 'wb') as f:
         pickle.dump({'images':images, 'labels':labels}, f, 2)
     return (images, labels)
 
+def transcription_factor(dataset="training", index=1, path=os.path.join(DATA_PATH, "TF")):
+    """
+    Loads transcription factor binding data into a 2D numpy array.
+
+    Parameters
+    ----------
+    dataset : str 
+        Either "training", "validation", "testing", or "all", depending on which dataset you want to
+        load. 
+    path : str 
+        Path to your transcription factor binding datafiles. The default is in "/projects/deeplearning/data/TF/", if not specified
+
+    Returns
+    -------
+    TODO I don't know this!!!
+    input : ndarray
+        DNA sequence data of shape ``(N, )``, where ``N`` is the number of target sequences.
+    target : ndarray
+        Array of size ``N`` describing the scores
+
+    Examples
+    --------
+
+    >>> sequence, scores = datasets.transcription_factor('training', index = 1) # doctest: +SKIP
+    """
+    # Load the dataset
+    filename = os.path.join(path, "TF_%d_cont.pkl.gz" % index)
+    with gzip.open(filename, 'rb') as f:
+        train_set, valid_set, test_set = pickle.load(f)
+
+    dic  = {"training"   : train_set,
+            "validation" : valid_set,
+            "testing"    : test_set,
+            "all"        : (train_set, valid_set, test_set)}
+
+    return dic[dataset]
+
 if __name__=="__main__":
-    mnist()
-    print 1 
-    mnist('testing')
-    print 2 
+    pass
