@@ -8,7 +8,7 @@ import TF_model as model
 import datasets
 from trainer import Trainer
 
-def make_batches(x, y, batch_size=1000):
+def make_batches(x, y, batch_size=64):
     "Generates tuples (x,y) of training mini-batches"
     n_samples = x.shape[0]
 
@@ -20,21 +20,25 @@ def make_batches(x, y, batch_size=1000):
             idxs = slice(i*batch_size, (i+1) * batch_size)
             yield x[idxs],y[idxs]
 
+def preprocess(x,y):
+    x = np.append(x, np.fliplr(x))
+    y = np.append(y,y)
+    return x,y
 
 if __name__ == "__main__":
     print "Loading dataset..."
     x,y = datasets.transcription_factor()
-    batches = make_batches(x, y, 1000)
+    x,y   = preprocess(x,y)
+    batches = make_batches(x, y)
 
     print "Compiling theano..."
-    X = T.imatrix('X')
+    X = T.fmatrix('X')
     Y = T.fmatrix('Y')
     P = Parameters()
 
-    # TODO: find better place to put magic numbers
-    net     = model.build(P, 140, 100, 1)
+    net     = model.build(P)
     Y_hat   = net(X)
-    predict = theano.function([X], Y_hat)
+    predict = theano.function([X], Y_hat, allow_input_downcast=True)
     cost    = model.cost(P, Y_hat, Y)
 
     print "Calculating gradient..."
@@ -42,7 +46,8 @@ if __name__ == "__main__":
     grad   = T.grad(cost, wrt = params)
     grad   = [g.astype(theano.config.floatX) for g in grad] #idek...
     train  = theano.function([X,Y], cost,
-                updates=updates.gradient_descent(params, grad))
+                updates=updates.momentum(params, grad),
+                allow_input_downcast=True)
     trainer = Trainer(batches, train, predict)
 
     # trainer()
