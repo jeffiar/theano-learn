@@ -32,4 +32,4 @@ def visual(val,max_val):
 if __name__ == "__main__":
 	a = np.random.randn(10,10)
 	print a
-	print_arr(a)
+	plot(a)
